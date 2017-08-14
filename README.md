@@ -1,8 +1,12 @@
 # JavaScript implementation of Tetris
 
+## The Tetris Guideline
+* https://harddrop.com/wiki/Tetris_Guideline
+
 ## Resources
 Random Generator
 * http://tetris.wikia.com/wiki/Random_Generator
+* https://harddrop.com/wiki/Random_Generator
 
 ## SRS
 * http://tetris.wikia.com/wiki/SRS

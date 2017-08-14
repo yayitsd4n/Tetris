@@ -25,6 +25,34 @@ var game = {
 
     requestAnimationFrame(game.main.bind(this));
   }
-}
+};
 
-requestAnimationFrame(game.main.bind(game));
+var randomGenerator = {
+  bag: [],
+  getTetromino() {
+    if (this.bag.length == 0) {
+      console.log('generate new bag');
+      this.bag = this.generateNewBag();
+    }
+    return this.bag.shift();
+  },
+  generateNewBag() {
+    var tetrominoes = ['I','J','L','O','S','T','Z'];
+    var bag = [];
+
+    for (var i = 7; i > 0; i--) {
+      var tetrominoIndex = Math.floor( Math.random() * i);
+
+      bag.push(tetrominoes[tetrominoIndex]);
+      tetrominoes.splice(tetrominoIndex, 1);
+    }
+
+    return bag;
+  }
+};
+
+setInterval(function() {
+  console.log(randomGenerator.getTetromino());
+}, 1000);
+
+//requestAnimationFrame(game.main.bind(game));
