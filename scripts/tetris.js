@@ -1,4 +1,6 @@
-var game = {
+// Basically the main loop. Keeps track of time, schedules user input,
+// game logic updates, and rendering
+var Game = {
   timeStep: 1000 / 60,
   lastFrameMs: 0,
   delta: 0,
@@ -6,12 +8,12 @@ var game = {
 
   },
   update(delta) {
-    console.log('update', delta);
+    Gameboard.tick(delta);
   },
   render(interp) {
     console.log(interp);
   },
-  main: function(timestamp) { 
+  main: function(timestamp) {
     var elapsed = timestamp - this.lastFrameMs;
     this.lastFrameMs = timestamp;
     this.delta += elapsed;
@@ -23,21 +25,62 @@ var game = {
     }
     this.render(this.delta / this.timeStep);
 
-    requestAnimationFrame(game.main.bind(this));
+    requestAnimationFrame(this.main.bind(this));
   }
 };
 
-var randomGenerator = {
+// The game board state
+var Gameboard = {
+  board: [
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]]
+  ],
+  tetromino: null,
+  tick() {
+    setTetromino();
+  }
+
+};
+
+var GameboardUtils = {
+  setTetromino() {
+    this.tetromino = RandomGenerator.getTetromino() 
+  },
+}
+Object.setPrototypeOf(Gameboard, GameboardUtils);
+
+// Handles randomly generating and returning a tetromino
+var RandomGenerator = {
   bag: [],
   getTetromino() {
-    if (this.bag.length == 0) {
+    if (this.bag.length === 0) {
       console.log('generate new bag');
       this.bag = this.generateNewBag();
     }
     return this.bag.shift();
   },
   generateNewBag() {
-    var tetrominoes = ['I','J','L','O','S','T','Z'];
+    //var tetrominoes = ['I','J','L','O','S','T','Z'];
     var bag = [];
 
     for (var i = 7; i > 0; i--) {
@@ -51,8 +94,25 @@ var randomGenerator = {
   }
 };
 
-setInterval(function() {
-  console.log(randomGenerator.getTetromino());
-}, 1000);
+var I = {
+  piece: [['I'],['I'],['I'],['I']]
+};
+var O = {
+  piece: [
+    [['O'],['O']],
+    [['O'],['O']]
+  ]
+};
+var T = {
+  piece: [
+    [['T'],['T'],['T']],
+    [[null],['T'],[null]]
+  ]
+};
 
-//requestAnimationFrame(game.main.bind(game));
+// setInterval(function() {
+//   Gameboard.setTetromino()
+//   console.log(Gameboard);
+// }, 1000);
+
+//requestAnimationFrame(game.main.bind(Game));
