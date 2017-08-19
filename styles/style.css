@@ -1,0 +1,32 @@
+table {
+  border-collapse: collapse;
+}
+
+td {
+  padding: 0;
+  width: 15px;
+  height: 15px;
+  background: #ccc;
+}
+
+.I {
+  background: cyan;
+}
+.J {
+  background: blue;
+}
+.L {
+  background: orange;
+}
+.O {
+  background: yellow;
+}
+.S {
+  background: green;
+}
+.T {
+  background: purple;
+}
+.Z {
+  background: red;
+}
