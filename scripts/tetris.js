@@ -92,74 +92,71 @@ var GameboardUtils = {
   setTetromino() {
     var tetromino = RandomGenerator.getTetromino();
     var properties = {
-      y: {
-        writable: true,
-        enumerable: true,
-        configurable: true,
-        value: 0
-      },
-      x: {
-        writable: true,
-        enumerable: true,
-        configurable: true,
-        value: 0
-      },
       frames: {
         writable: true,
         enumerable: true,
         configurable: true,
         value: 0
       },
-      entity: {
+      blocks: {
         writable: true,
         enumerable: true,
         configurable: true
       }
     };
 
+    function setBlocks(tetromino) {
+      var blocks = [];
+      tetromino.blocks.forEach(function(block) {
+        blocks.push({
+          y: block.y,
+          x: block.x
+        });
+      });
+
+      properties.blocks.value = blocks;
+    };
+
     switch (tetromino) {
       case 'I':
-        properties.x.value = I.spawnPoints.x;
-        properties.y.value = I.spawnPoints.y;
-        properties.entity.value = I.entity.slice();
+        //properties.blocks.value = I.blocks.slice();
+        setBlocks(I);
         this.tetromino = Object.create(I, properties);
         break;
       case 'J':
-        properties.x.value = J.spawnPoints.x;
-        properties.y.value = J.spawnPoints.y;
-        properties.entity.value = J.entity.slice();
+        setBlocks(J);
         this.tetromino = Object.create(J, properties);
         break;
-      case 'L':
-        properties.x.value = L.spawnPoints.x;
-        properties.y.value = L.spawnPoints.y;
-        properties.entity.value = L.entity.slice();
-        this.tetromino = Object.create(L, properties);
-        break;
-      case 'O':
-        properties.x.value = O.spawnPoints.x;
-        properties.y.value = O.spawnPoints.y;
-        properties.entity.value = O.entity.slice();
-        this.tetromino = Object.create(O, properties);
-        break;
-      case 'S':
-        properties.x.value = S.spawnPoints.x;
-        properties.y.value = S.spawnPoints.y;
-        properties.entity.value = S.entity.slice();
-        this.tetromino = Object.create(S, properties);
-        break;
-      case 'T':
-        properties.x.value = T.spawnPoints.x;
-        properties.y.value = T.spawnPoints.y;
-        properties.entity.value = T.entity.slice();
-        this.tetromino = Object.create(T, properties);
-        break;
-      case 'Z':
-        properties.x.value = Z.spawnPoints.x;
-        properties.y.value = Z.spawnPoints.y;
-        properties.entity.value = Z.entity.slice();
-        this.tetromino = Object.create(Z, properties);
-        break;
+      // case 'L':
+      //   properties.x.value = L.spawnPoints.x;
+      //   properties.y.value = L.spawnPoints.y;
+      //   properties.entity.value = L.entity.slice();
+      //   this.tetromino = Object.create(L, properties);
+      //   break;
+      // case 'O':
+      //   properties.x.value = O.spawnPoints.x;
+      //   properties.y.value = O.spawnPoints.y;
+      //   properties.entity.value = O.entity.slice();
+      //   this.tetromino = Object.create(O, properties);
+      //   break;
+      // case 'S':
+      //   properties.x.value = S.spawnPoints.x;
+      //   properties.y.value = S.spawnPoints.y;
+      //   properties.entity.value = S.entity.slice();
+      //   this.tetromino = Object.create(S, properties);
+      //   break;
+      // case 'T':
+      //   properties.x.value = T.spawnPoints.x;
+      //   properties.y.value = T.spawnPoints.y;
+      //   properties.entity.value = T.entity.slice();
+      //   this.tetromino = Object.create(T, properties);
+      //   break;
+      // case 'Z':
+      //   properties.x.value = Z.spawnPoints.x;
+      //   properties.y.value = Z.spawnPoints.y;
+      //   properties.entity.value = Z.entity.slice();
+      //   this.tetromino = Object.create(Z, properties);
+      //   break;
     }
   }
 }
@@ -204,6 +201,7 @@ var RandomGenerator = {
   },
   generateNewBag() {
     var tetrominoes = ['I','J','L','O','S','T','Z'];
+    var tetrominoes = ['I','I','I','I','I','I','I'];
     var bag = [];
 
     for (var i = 7; i > 0; i--) {
@@ -226,8 +224,9 @@ var Tetromino = {
     // if (this.frames == 15) {
     //   this.frames = 0;
 
+    //   var transformed = this.transform(1, 0);
     //   if (this.destroy) {
-    //     if (this.checkCollision(1, 0)) {
+    //     if (!this.checkCollision(transformed)) {
     //       Gameboard.tetromino = null;
     //       return;
     //     } else {
@@ -235,7 +234,7 @@ var Tetromino = {
     //     }
     //   }
 
-    //   if (!this.checkCollision(1, 0)) {
+    //   if (this.checkCollision(transformed)) {
     //     this.moveSelf(1, 0);
     //   } else {
     //     console.log('set to destroy');
@@ -244,29 +243,46 @@ var Tetromino = {
     // }
   },
   spawn(Gameboard) {
-    this.entity.forEach(function(row, rowIndex) {
-      row.forEach(function(part, partIndex) {
-        if (part != 0) {
-          var y = this.y + rowIndex,
-              x = this.x + partIndex;
-          
-          Gameboard.board[y][x] = part;
-        }
-      }, this);
+    this.blocks.forEach(function(block) {
+      Gameboard.board[block.y][block.x] = this.block;
     }, this);
+    // this.entity.forEach(function(row, rowIndex) {
+    //   row.forEach(function(part, partIndex) {
+    //     if (part != 0) {
+    //       var y = this.y + rowIndex,
+    //           x = this.x + partIndex;
+          
+    //       Gameboard.board[y][x] = part;
+    //     }
+    //   }, this);
+    // }, this);
+  },
+  transform(moveY, moveX) {
+    var positions = [];
+
+    this.blocks.forEach(function(block) {
+      positions.push({
+        y: block.y + moveY,
+        x: block.x + moveX
+      });
+    }, this);
+
+    return positions;
   },
   handleInput() {
     var input = UserInputs.inputqueue.pop();
 
     if (input == 'ArrowLeft') {
-      if (!this.checkCollision(0, -1)) {
-        this.moveSelf(0, -1);
+      var transformed = this.transform(0, -1);
+      if (this.checkCollision(transformed)) {
+        this.moveSelf(transformed);
       }
     }
 
     if (input == 'ArrowRight') {
-      if (!this.checkCollision(0, 1)) {
-        this.moveSelf(0, 1);
+      var transformed = this.transform(0, 1);
+      if (this.checkCollision(transformed)) {
+        this.moveSelf(transformed);
       }
     }
 
@@ -274,125 +290,168 @@ var Tetromino = {
       this.rotate();
     }
   },
-  checkCollision(y, x) {
-    var positions = [];
-    var collision = false;
+  checkCollision(transformed) {
+    return transformed.every(function(position) {
 
-    this.entity.forEach(function(row, rowIndex) {
-      row.forEach(function(part, partIndex) {
-        if (part != 0) {
-          positions.push((this.y + rowIndex) + ':' + (this.x + partIndex));
+      if (position.y == Gameboard.board.length) {
+        console.log('hit floor');
+        return false;
+      }
+      
+      return this.blocks.some(function(position2) {
+        console.log(position.y, position.x);
+        if (Gameboard.board[position.y][position.x] != 0) {
+          return position.y == position2.y && position.x == position2.x;
+        } else {
+          return true;
         }
       }, this);
+
     }, this);
-
-    this.entity.forEach(function(row, rowIndex) {
-      row.forEach(function(part, partIndex) {
-        var partY = this.y + rowIndex + y,
-            partX = this.x + partIndex + x;
-        
-        if (part == 0) return;
-
-        // Is the part about to hit the floor?
-        if (Gameboard.board.length == partY) {
-          console.log('collision');
-          collision = 'bottom';
-          return;
-        }
-
-        // Is the part going to an occupied space?
-        if (Gameboard.board[partY][partX] != 0) {
-        // Is the occupied space part of the current tetromino?
-          if (positions.indexOf(partY + ':' + partX) == -1) {
-            collision = 'occupied';
-          }
-        }
-        
-      }, this);
-    }, this);
-    
-    return collision;
   },
   clearSelf() {
-    this.entity.forEach(function(row, rowIndex) {
-      row.forEach(function(part, partIndex) {
-        Gameboard.board[rowIndex + this.y][partIndex + this.x] = 0;
-      }, this);
+    this.blocks.forEach(function(block) {
+      Gameboard.board[block.y][block.x] = 0;;
     }, this);
+    // this.entity.forEach(function(row, rowIndex) {
+    //   row.forEach(function(part, partIndex) {
+    //     if (part != 0) {
+    //       Gameboard.board[rowIndex + this.y][partIndex + this.x] = 0;
+    //     }
+    //   }, this);
+    // }, this);
   },
-  moveSelf(moveY, moveX) {
+  moveSelf(transformed) {
     this.clearSelf();
-    this.y += moveY;
-    this.x += moveX;
+    this.blocks = transformed;
 
-    this.entity.forEach(function(row, rowIndex) {
-      row.forEach(function(part, partIndex) {
-        if (part != 0) {
-          var y = this.y + rowIndex,
-              x = this.x + partIndex;
-          
-          Gameboard.board[y][x] = part;
-        }
-      }, this);
+    this.blocks.forEach(function(position) {
+      Gameboard.board[position.y][position.x] = this.block;
     }, this);
+
+    console.log('this.blocks', this.blocks);
   },
   rotate() {
-    console.log(Object.getPrototypeOf(this));
-    this.clearSelf();
+    var positions = [];
 
-    var newEntity = this.entity.map(function(row) {
-      return row.map(function(cell) {
-        return 0;
-      }, this);
+    this.blocks.forEach(function(block) {
+      var y = block.y,
+          x = block.x;
+      
+      console.log(this.pivit());
+      console.log(block.y);
+
+      var vY = y - this.pivit().y;
+      var vX = x - this.pivit().x;
+
+      var newY = (0 * vY) + (1 * vX) + this.pivit().y;
+      var newX = (-1 * vY) + (0 * vX) + this.pivit().x;
+
+      positions.push({
+        y: newY,
+        x: newX
+      });
     }, this);
 
-    var yOrigin = 1,
-        xOrigin = 1;
-    
-    this.entity.forEach(function(row, rowIndex) {
-      row.forEach(function(cell, cellIndex) {
+    console.log(positions);
 
-        var y = rowIndex,
-            x = cellIndex;
-
-        var vY = y - yOrigin;
-        var vX = x - xOrigin;
+    // this.entity.forEach(function(row, rowIndex) {
+    //   row.forEach(function(cell, cellIndex) {
         
-        var newY = (0 * vY) + (1 * vX) + yOrigin;
-        var newX = (-1 * vY) + (0 * vX) + xOrigin;
+    //     var y = rowIndex + this.y,
+    //         x = cellIndex + this.x;
 
-        newEntity[newY][newX] = cell;
-      }, this)
-    }, this);
+    //     var vY = y - (this.y + this.middle);
+    //     var vX = x - (this.x + this.middle);
+        
+    //     var newY = (0 * vY) + (1 * vX) + (this.y + this.middle);
+    //     var newX = (-1 * vY) + (0 * vX) + (this.x + this.middle);
 
-    this.entity = newEntity;
-    this.moveSelf(0,0);
+    //     positions.push({
+    //         y: newY,
+    //         x: newX
+    //       });
+    //     //newEntity[newY][newX] = cell;
+    //   }, this)
+    // }, this);
+
+    if (this.checkCollision(positions)) {
+      this.moveSelf(positions);
+      console.log('move');
+    } else {
+      console.log('cant move');
+    }
+
+    // this.clearSelf();
+    // this.entity = newEntity;
+    // this.moveSelf(0, 0);
   }
 };
 
 var I = {
-  entity: [
-    [0,0,0,0],
-    ['I', 'I', 'I', 'I']
-    [0,0,0,0],
-    [0,0,0,0]
+  block: 'I',
+  blocks: [
+    {
+      y: 4,
+      x: 2
+    },
+    {
+      y: 4,
+      x: 3
+    },
+    {
+      y: 4,
+      x: 4
+    },
+    {
+      y: 4,
+      x: 5
+    }
   ],
-  spawnPoints: {
-    y: 5,
-    x: 5
+  pivit() {
+    var canvas = [
+      [0,0,0,0],
+      [0,0,0,0],
+      [0,0,0,0],
+      [0,0,0,0]
+    ];
+    
+    this.blocks.forEach(function() {
+      
+    }, this);
+
+  },
+  kick() {
+
   }
 };
 Object.setPrototypeOf(I, Tetromino);
 
 var J = {
-  entity: [
-    ['J', 0, 0],
-    ['J', 'J', 'J'],
-    [0,0,0]    
+  block: 'J',
+  blocks: [
+    {
+      y: 0,
+      x: 5
+    },
+    {
+      y: 1,
+      x: 5
+    },
+    {
+      y: 1,
+      x: 6,
+    },
+    {
+      y: 1,
+      x: 7
+    }
   ],
-  spawnPoints: {
-    y: 3,
-    x: 5
+  pivit() {
+    return {
+      y: this.blocks[2].y,
+      x: this.blocks[2].x
+    }
   }
 };
 Object.setPrototypeOf(J, Tetromino);
@@ -401,12 +460,13 @@ var L = {
   entity: [
     [0, 0, 'L'],
     ['L', 'L', 'L'],
-    [0,0,0]
+    [0, 0, 0]
   ],
   spawnPoints: {
     y: 0,
     x: 5
-  }
+  },
+  middle: 1
 };
 Object.setPrototypeOf(L, Tetromino);
 
@@ -418,6 +478,11 @@ var O = {
   spawnPoints: {
     y: 0,
     x: 5
+  },
+  rotate() {
+    // Shadow base rotate method
+    // O block does not rotate
+    return;
   }
 };
 Object.setPrototypeOf(O, Tetromino);
@@ -426,12 +491,13 @@ var S = {
   entity: [
     [0, 'S', 'S'],
     ['S', 'S', 0],
-    [0,0,0]
+    [0, 0, 0]
   ],
   spawnPoints: {
     y: 0,
     x: 5
-  }
+  },
+  middle: 1
 };
 Object.setPrototypeOf(S, Tetromino);
 
@@ -439,12 +505,13 @@ var T = {
   entity: [
     [0, 'T', 0],
     ['T', 'T', 'T'],
-    [0,0,0]
+    [0, 0, 0]
   ],
   spawnPoints: {
     y: 0,
     x: 5
-  }
+  },
+  middle: 1
 };
 Object.setPrototypeOf(T, Tetromino);
 
@@ -452,12 +519,13 @@ var Z = {
   entity: [
     ['Z', 'Z', 0],
     [0, 'Z', 'Z'],
-    [0,0,0]
+    [0, 0, 0]
   ],
   spawnPoints: {
     y: 0,
     x: 5
-  }
+  },
+  middle: 1
 };
 Object.setPrototypeOf(Z, Tetromino);
 
