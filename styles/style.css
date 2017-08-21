@@ -1,12 +1,12 @@
 table {
-  border-collapse: collapse;
+  background: #ccc;
 }
 
 td {
   padding: 0;
   width: 15px;
   height: 15px;
-  background: #ccc;
+  background: #2d2d2d;
 }
 
 .I {
