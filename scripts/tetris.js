@@ -152,6 +152,26 @@ var GameboardUtils = {
         this.tetromino = Object.create(Z, properties);
         break;
     }
+  },
+  checkDeleteRows(row) {
+    return this.board[row].every(function(cell) {
+      return cell != 0;
+    }, this);
+  },
+  deleteRows(blocks) {
+    var rowsDeleted = [];
+    blocks.forEach(function(block) {
+      if (this.checkDeleteRows(block.y)) {
+        rowsDeleted.push(block.y);
+      }
+    }, this);
+
+    if (rowsDeleted.length) {
+      rowsDeleted.forEach(function(row) {
+        this.board.splice(row, 1);
+        this.board.unshift([0,0,0,0,0,0,0,0,0,0]);
+      }, this);
+    }
   }
 }
 Object.setPrototypeOf(Gameboard, GameboardUtils);
@@ -166,8 +186,11 @@ var Asciirender = {
 
     asciiCanavs.innerHTML = '';
 
-    this.board.forEach(function(row) {
+    this.board.forEach(function(row, rowIndex) {
       var asciiRow = document.createElement('tr');
+      if (rowIndex < 2) {
+        asciiRow.classList = 'hidden';
+      }
       row.forEach(function(column) {
         var square = document.createElement('td');
 
@@ -214,26 +237,36 @@ var Tetromino = {
 
     this.handleInput();
 
-    // if (this.frames == 15) {
-    //   this.frames = 0;
+    if (this.frames == 10) {
+      this.frames = 0;
 
-    //   var transformed = this.transform(1, 0, this.blocks);
-    //   if (this.destroy) {
-    //     if (!this.checkCollision(transformed)) {
-    //       Gameboard.tetromino = null;
-    //       return;
-    //     } else {
-    //       this.destroy = false;
-    //     }
-    //   }
+      var transformed = this.transform(1, 0, this.blocks);
+      if (this.destroy) {
+        if (!this.checkCollision(transformed)) {
+          // Check to delete rows
+          Gameboard.deleteRows(this.blocks);
 
-    //   if (this.checkCollision(transformed)) {
-    //     this.moveSelf(transformed);
-    //   } else {
-    //     console.log('set to destroy');
-    //     this.destroy = true;
-    //   }
-    // }
+          // Check for game over
+          this.blocks.forEach(function(block) {
+            if (block.y < 2) {
+              alert('game over');
+            }
+          }, this);
+
+          Gameboard.tetromino = null;
+          return;
+        } else {
+          this.destroy = false;
+        }
+      }
+
+      if (this.checkCollision(transformed)) {
+        this.moveSelf(transformed);
+      } else {
+        console.log('set to destroy');
+        this.destroy = true;
+      }
+    }
   },
   spawn() {
     this.blocks.forEach(function(block) {
@@ -402,19 +435,19 @@ var I = {
   block: 'I',
   blocks: [
     {
-      y: 0,
+      y: 2,
       x: 5
     },
     {
-      y: 0,
+      y: 2,
       x: 6
     },
     {
-      y: 0,
+      y: 2,
       x: 7
     },
     {
-      y: 0,
+      y: 2,
       x: 8
     }
   ],
@@ -489,19 +522,19 @@ var J = {
   block: 'J',
   blocks: [
     {
-      y: 0,
-      x: 5
-    },
-    {
       y: 1,
       x: 5
     },
     {
-      y: 1,
+      y: 2,
+      x: 5
+    },
+    {
+      y: 2,
       x: 6,
     },
     {
-      y: 1,
+      y: 2,
       x: 7
     }
   ],
@@ -518,19 +551,19 @@ var L = {
   block: 'L',
   blocks: [
     {
-      y: 0,
+      y: 1,
       x: 7
     },
     {
-      y: 1,
+      y: 2,
       x: 5
     },
     {
-      y: 1,
+      y: 2,
       x: 6
     },
     {
-      y: 1,
+      y: 2,
       x: 7
     }
   ],
@@ -547,19 +580,19 @@ var O = {
   block: 'O',
   blocks: [
     {
-      y: 0,
+      y: 1,
       x: 5
     },
     {
-      y: 0,
+      y: 1,
       x: 6
     },
     {
-      y: 1,
+      y: 2,
       x: 5
     },
     {
-      y: 1,
+      y: 2,
       x: 6
     }
   ],
@@ -575,19 +608,19 @@ var S = {
   block: 'S',
   blocks: [
     {
-      y: 0,
+      y: 1,
       x: 6
     },
     {
-      y: 0,
+      y: 1,
       x: 7
     },
     {
-      y: 1,
+      y: 2,
       x: 5
     },
     {
-      y: 1,
+      y: 2,
       x: 6
     }
   ],
@@ -604,19 +637,19 @@ var T = {
   block: 'T',
   blocks: [
     {
-      y: 0,
+      y: 1,
       x: 6
     },
     {
-      y: 1,
+      y: 2,
       x: 5
     },
     {
-      y: 1,
+      y: 2,
       x: 6
     },
     {
-      y: 1,
+      y: 2,
       x: 7
     }
   ],
@@ -633,19 +666,19 @@ var Z = {
   block: 'Z',
   blocks: [
     {
-      y: 0,
+      y: 1,
       x: 5
     },
     {
-      y: 0,
-      x: 6
-    },
-    {
       y: 1,
       x: 6
     },
     {
-      y: 1,
+      y: 2,
+      x: 6
+    },
+    {
+      y: 2,
       x: 7
     }
   ],

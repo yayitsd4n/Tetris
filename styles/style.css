@@ -2,6 +2,10 @@ table {
   background: #ccc;
 }
 
+.hidden {
+  display: none;
+}
+
 td {
   padding: 0;
   width: 15px;
