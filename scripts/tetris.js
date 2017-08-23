@@ -194,7 +194,7 @@ var RandomGenerator = {
   },
   generateNewBag() {
     var tetrominoes = ['I','J','L','O','S','T','Z'];
-    var tetrominoes = ['I','I','I','I','I','I','I'];
+    //var tetrominoes = ['I','I','I','I','I','I','I'];
     var bag = [];
 
     for (var i = 7; i > 0; i--) {
@@ -217,7 +217,7 @@ var Tetromino = {
     // if (this.frames == 15) {
     //   this.frames = 0;
 
-    //   var transformed = this.transform(1, 0);
+    //   var transformed = this.transform(1, 0, this.blocks);
     //   if (this.destroy) {
     //     if (!this.checkCollision(transformed)) {
     //       Gameboard.tetromino = null;
@@ -240,10 +240,10 @@ var Tetromino = {
       Gameboard.board[block.y][block.x] = this.block;
     }, this);
   },
-  transform(moveY, moveX) {
+  transform(moveY, moveX, blocks) {
     var positions = [];
 
-    this.blocks.forEach(function(block) {
+    blocks.forEach(function(block) {
       positions.push({
         y: block.y + moveY,
         x: block.x + moveX
@@ -255,14 +255,14 @@ var Tetromino = {
   handleInput() {
     var input = UserInputs.inputqueue.pop();
     if (input == 'ArrowLeft') {
-      var transformed = this.transform(0, -1);
+      var transformed = this.transform(0, -1, this.blocks);
       if (this.checkCollision(transformed)) {
         this.moveSelf(transformed);
       }
     }
 
     if (input == 'ArrowRight') {
-      var transformed = this.transform(0, 1);
+      var transformed = this.transform(0, 1, this.blocks);
       if (this.checkCollision(transformed)) {
         this.moveSelf(transformed);
       }
@@ -279,8 +279,7 @@ var Tetromino = {
   checkCollision(transformed) {
     return transformed.every(function(position) {
 
-      if (position.y == Gameboard.board.length) {
-        console.log('hit floor');
+      if (position.y == Gameboard.board.length || position.y < 0 || position.x < 0 || position.x > Gameboard.board[0].length) {
         return false;
       }
       
@@ -308,92 +307,26 @@ var Tetromino = {
     }, this);
   },
   SRS(directionY, directionX) {
-    var tests;
-    switch(this.position) {
-      case(0):
-        tests = {
-          1: [
-            [-1, 0],[-1, 1],[0, 2],[-1, -2]
-          ],
-          3: [
-            [1, 0], [1, 1], [0, -2], [1, 2]
-          ]
-        }
-      break;
-      case(1):
-      case(-1):
-        tests =  {
-          0: [
-            [1, 0], [1, -1], [0, 2], [1, 2]
-          ],
-          2: [
-            [1, 0], [1, -1], [0, 2], [1, 2]
-          ]
-        }
-      break;
-      case(2):
-      case(-2):
-        tests = {
-          1: [
-            [-1, 0], [-1, 1], [0, -2], [-1, -2]
-          ],
-          3: [
-            [1, 0], [1, 1], [0, -2], [1, -2]
-          ]
-        }
-      break;
-      case(3):
-      case(-3):
-        tests = {
-          2: [
-            [-1, 0], [-1, -1], [0, 2], [-1, -2]
-          ], 
-          0: [
-            [-1, 0], [-1, -1], [0, 2], [-1, 2]
-          ]
-        }
-      break;
-    }
+    var rotate = this.rotate(directionY, directionX, this.blocks);
 
-    var positions = [1, 2, 3, 0, 1, 2, 3];
-    var pointer = positions.indexOf(this.position),
-        newPointer,
-        futurePosition;
-
-    if (pointer + directionY == 7 || pointer + directionY == -1) {
-      newPointer = 3;
+    if (this.checkCollision(rotate)) {
+      this.moveSelf(rotate);
+      this.position = futurePosition.call(this);
     } else {
-      newPointer = pointer + directionY;
+      var tests = this.getTests(futurePosition.call(this));
+
+      for (var i=0; i<tests.length; i++) {
+        var translated = this.transform(tests[i].y, tests[i].x, rotate);
+
+        if (this.checkCollision(translated)) {
+           this.moveSelf(translated);
+           this.position = futurePosition.call(this);
+           break;
+        }
+      }
     }
 
-    futurePosition = positions[newPointer];
-
-    console.log(tests[futurePosition]);
-  },
-  rotate(directionY, directionX) {
-    var positions = [];
-    var pivit = this.pivit();
-
-    this.blocks.forEach(function(block) {
-      var y = block.y,
-          x = block.x;
-
-      var vY = y - pivit.y;
-      var vX = x - pivit.x;
-
-      var newY = (0 * vY) + (directionY * vX) + pivit.y;
-      var newX = (directionX * vY) + (0 * vX) + pivit.x;
-
-      positions.push({
-        y: newY,
-        x: newX
-      });
-    }, this);
-
-    if (this.checkCollision(positions)) {
-      this.moveSelf(positions);
-      
-      // Save the orientation
+    function futurePosition() {
       var positions = [1, 2, 3, 0, 1, 2, 3];
       var pointer = positions.indexOf(this.position),
           newPointer;
@@ -403,14 +336,65 @@ var Tetromino = {
       } else {
         newPointer = pointer + directionY;
       }
-
-      this.position = positions[newPointer];
-    } else {
-      this.kick();
+      return positions[newPointer];
     }
   },
-  kick() {
-    
+  rotate(directionY, directionX, blocks) {
+    var positions = [];
+    var pivit = this.pivit();
+
+    blocks.forEach(function(block) {
+      var y = block.y,
+          x = block.x;
+
+      var vY = y - pivit.y;
+      var vX = x - pivit.x;
+
+      var newY = (directionY * vX) + pivit.y;
+      var newX = (directionX * vY) + pivit.x;
+
+      positions.push({
+        y: newY,
+        x: newX
+      });
+    }, this);
+
+    return positions;
+  },
+  getTests(futurePosition) {
+    switch(this.position) {
+      case(0):
+        switch(futurePosition) {
+          case(1):
+            return [{y: 0, x: -1}, {y: 1, x: -1}, {y: -2, x: 0}, {y:-2, x: -1}];
+          case(3):
+            return [{y: 0, x: 1}, {y: 1, x: 1}, {y: -2, x: 0}, {y:-2, x: 1}]
+        }
+      break;
+      case(1):
+        switch(futurePosition) {
+          case(0):
+            return [{y: 0, x: 1}, {y: -1, x: 1}, {y: 2, x: 0}, {y:2, x: 1}];
+          case(2):
+            return [{y: 0, x: 1}, {y: -1, x: 1}, {y: 2, x: 0}, {y:2, x: 1}];
+        }
+      break;
+      case(2):
+        switch(futurePosition) {
+          case(1):
+            return [{y: 0, x: -1}, {y: 1, x: -1}, {y: -2, x: 0}, {y:-2, x: -1}];
+          case(3):
+            return [{y: 0, x: 1}, {y: 1, x: 1}, {y: -2, x: 0}, {y:-2, x: 1}];
+        }
+      break;
+      case(3):
+        switch(futurePosition) {
+          case(2):
+            return [{y: 0, x: -1}, {y: -1, x: -1}, {y: 2, x: 0}, {y:2, x: -1}];
+          case(0):
+            return [{y: 0, x: -1}, {y: -1, x: -1}, {y: 2, x: 0}, {y:2, x: -1}];
+        }
+    }
   }
 };
 
@@ -418,19 +402,19 @@ var I = {
   block: 'I',
   blocks: [
     {
-      y: 3,
+      y: 0,
       x: 5
     },
     {
-      y: 3,
+      y: 0,
       x: 6
     },
     {
-      y: 3,
+      y: 0,
       x: 7
     },
     {
-      y: 3,
+      y: 0,
       x: 8
     }
   ],
@@ -462,6 +446,41 @@ var I = {
       x: x
     };
 
+  },
+  getTests(futurePosition) {
+    switch(this.position) {
+      case(0):
+        switch(futurePosition){
+          case(1):
+            return [{y: 0, x: -2}, {y: 0, x: 1}, {y: -1, x: -2}, {y: 2, x: 1}];
+          case(3):
+            return  [{y: 0, x: -1}, {y: 0, x: 2}, {y: 2, x: -1}, {y: -1, x: 2}]
+        }
+      break;
+      case(1):
+        switch(futurePosition) {
+          case(0):
+            return [{y: 0, x: 2}, {y: 0, x: -1}, {y: 1, x: 2}, {y: -2, x: -1}];
+          case(2):
+            return [{y: 0, x: -1}, {y: 0, x: 2}, {y: 2, x: -1}, {y: -1, x: 2}];
+        }
+      break;
+      case(2):
+        switch(futurePosition) {
+          case(1):
+            return [{y: 0, x: 1}, {y: 0, x: -2}, {y: -2, x: 1}, {y: 1, x: -2}];
+          case(3):
+            return [{y: 0, x: 2}, {y: 0, x: -1}, {y: 1, x: 2}, {y: -2, x: -1}];
+        }
+      break;
+      case(3):
+        switch(futurePosition) {
+          case(2):
+            return [{y: 0, x: -2}, {y: 0, x: 1}, {y: -1, x: -2}, {y: 2, x: 1}];
+          case(0):
+            return [{y: 0, x: 1}, {y: 0, x: -2}, {y: -2, x: 1}, {y: 1, x: -2}];
+        }
+    }
   }
 };
 Object.setPrototypeOf(I, Tetromino);
@@ -544,7 +563,7 @@ var O = {
       x: 6
     }
   ],
-  rotate() {
+  SRS() {
     // Shadow base rotate method
     // O block does not rotate
     return;
