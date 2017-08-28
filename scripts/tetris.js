@@ -107,6 +107,12 @@ var GameboardUtils = {
         enumerable: true,
         configurable: true,
         value: 0
+      },
+      lockDelay: {
+        writable: true,
+        enumerable: true,
+        configurable: true,
+        value: false
       }
     };
 
@@ -153,25 +159,24 @@ var GameboardUtils = {
         break;
     }
   },
-  checkDeleteRows(row) {
-    return this.board[row].every(function(cell) {
-      return cell != 0;
-    }, this);
+  checkGameOver() {
+    this.board[0].concat(this.board[1]).forEach(function(cell) {
+      if (cell != 0) {
+        console.log('gameover');
+      }
+    });
   },
-  deleteRows(blocks) {
-    var rowsDeleted = [];
+  checkClearRows(blocks) {
     blocks.forEach(function(block) {
-      if (this.checkDeleteRows(block.y)) {
-        rowsDeleted.push(block.y);
+      var y = block.y;
+      
+      if (this.board[y].every(function(cell) {
+        return cell != 0;
+      }) ) {
+        this.board.splice(y, 1);
+        this.board.unshift([0,0,0,0,0,0,0,0,0,0]);
       }
     }, this);
-
-    if (rowsDeleted.length) {
-      rowsDeleted.forEach(function(row) {
-        this.board.splice(row, 1);
-        this.board.unshift([0,0,0,0,0,0,0,0,0,0]);
-      }, this);
-    }
   }
 }
 Object.setPrototypeOf(Gameboard, GameboardUtils);
@@ -233,44 +238,44 @@ var RandomGenerator = {
 
 var Tetromino = {
   update() {
-    this.frames++;
-
     this.handleInput();
 
-    if (this.frames == 10) {
-      this.frames = 0;
+    if (this.lockDelay) {
+      this.lockDelay--;
 
-      var transformed = this.transform(1, 0, this.blocks);
-      if (this.destroy) {
+      if (this.lockDelay < 1) {
+        var transformed = this.transform(1, 0, this.blocks);
         if (!this.checkCollision(transformed)) {
-          // Check to delete rows
-          Gameboard.deleteRows(this.blocks);
-
-          // Check for game over
-          this.blocks.forEach(function(block) {
-            if (block.y < 2) {
-              alert('game over');
-            }
-          }, this);
-
           Gameboard.tetromino = null;
-          return;
-        } else {
-          this.destroy = false;
+          Gameboard.checkClearRows(this.blocks);
+          Gameboard.checkGameOver();
         }
       }
+      return;
+    }
 
-      if (this.checkCollision(transformed)) {
-        this.moveSelf(transformed);
-      } else {
-        console.log('set to destroy');
-        this.destroy = true;
-      }
+    this.frames++;
+    this.advance();
+  },
+  advance() {
+    if (this.frames != 15) return;
+    this.frames = 0;
+
+    var transformed = this.transform(1, 0, this.blocks);
+    if (this.checkCollision(transformed)) {
+      this.moveSelf(transformed);
+    } else {
+      this.lockDelay = 30;
     }
   },
   spawn() {
     this.blocks.forEach(function(block) {
       Gameboard.board[block.y][block.x] = this.block;
+    }, this);
+
+    this.ghostPositions = this.getBottom(1);
+    this.ghostPositions.forEach(function(position) {
+      Gameboard.board[position.y][position.x] = this.block + ' G';
     }, this);
   },
   transform(moveY, moveX, blocks) {
@@ -284,6 +289,14 @@ var Tetromino = {
     }, this);
 
     return positions;
+  },
+  getBottom(y) {
+    var transform = this.transform(y, 0, this.blocks);
+    if (this.checkCollision(transform)) {
+      return this.getBottom(y + 1);
+    } else {
+      return this.transform(y - 1, 0, this.blocks);
+    }
   },
   handleInput() {
     var input = UserInputs.inputqueue.pop();
@@ -301,6 +314,19 @@ var Tetromino = {
       }
     }
 
+    if (input == 'ArrowDown') {
+      if (this.lockDelay) {
+        this.lockDelay == 0;
+      } else {
+        this.move
+      }
+    }
+
+    if (input == 'ArrowUp') {
+      var blocks = this.getBottom(1);
+      this.moveSelf(blocks);
+    }
+
     if (input == 'a') {
       this.SRS(1, -1);
     }
@@ -312,12 +338,12 @@ var Tetromino = {
   checkCollision(transformed) {
     return transformed.every(function(position) {
 
-      if (position.y == Gameboard.board.length || position.y < 0 || position.x < 0 || position.x > Gameboard.board[0].length) {
+      if (position.y == Gameboard.board.length || position.y < 0 || position.x < 0 || position.x == Gameboard.board[0].length) {
         return false;
       }
       
       return this.blocks.some(function(position2) {
-        if (Gameboard.board[position.y][position.x] != 0) {
+        if (Gameboard.board[position.y][position.x] != 0 && Gameboard.board[position.y][position.x].length == 1) {
           return position.y == position2.y && position.x == position2.x;
         } else {
           return true;
@@ -328,12 +354,21 @@ var Tetromino = {
   },
   clearSelf() {
     this.blocks.forEach(function(block) {
-      Gameboard.board[block.y][block.x] = 0;;
+      Gameboard.board[block.y][block.x] = 0;
+    }, this);
+
+    this.ghostPositions.forEach(function(block) {
+      Gameboard.board[block.y][block.x] = 0;
     }, this);
   },
   moveSelf(transformed) {
     this.clearSelf();
     this.blocks = transformed;
+
+    this.ghostPositions = this.getBottom(1)
+    this.ghostPositions.forEach(function(position) {
+      Gameboard.board[position.y][position.x] = this.block + ' G';
+    }, this);
 
     this.blocks.forEach(function(position) {
       Gameboard.board[position.y][position.x] = this.block;
@@ -382,6 +417,9 @@ var Tetromino = {
 
       var vY = y - pivit.y;
       var vX = x - pivit.x;
+
+      // var newY = (0 * vY) + (directionY * vX) + pivit.y;
+      // var newX = (directionX * vY) + (0 * vX) + pivit.x;
 
       var newY = (directionY * vX) + pivit.y;
       var newX = (directionX * vY) + pivit.x;

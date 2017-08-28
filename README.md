@@ -20,16 +20,25 @@
 ---
 
 ## Todo
-* Hard-drop
+* ~~Hard-drop~~
 * Soft-drop
-* Deleting rows
+* ~~Deleting rows~~
 * Game speed
+  * Gravity curve
 * Showing next 3
 * Correct start locations
-* Ghost piece
-* Lose state
+* ~~Ghost piece~~
+* ~~Lose state~~
 * [DAS](https://harddrop.com/wiki/DAS)
-* Gravity curve
-* [Lock delay](https://harddrop.com/wiki/Lock_delay)
-  * Specifically manual lock
+* ~~[Lock delay](https://harddrop.com/wiki/Lock_delay)~~
+  * ~~Specifically manual lock~~
 * Scoring system
+* UI
+  * Board style
+  * Piece style
+  * Next 3
+  * Points
+  * Level
+  * Time played
+* Game over screen
+* Pause

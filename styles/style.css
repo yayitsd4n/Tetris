@@ -16,21 +16,48 @@ td {
 .I {
   background: cyan;
 }
+.I.G {
+  background: white;
+}
+
 .J {
   background: blue;
 }
+.J.G {
+  background: white;
+}
+
 .L {
   background: orange;
 }
+.L.G {
+  background: white;
+}
+
 .O {
   background: yellow;
 }
+.O.G {
+  background: white;
+}
+
 .S {
   background: green;
 }
+.S.G {
+  background: white;
+}
+
 .T {
   background: purple;
 }
+.T.G {
+  background: white;
+}
+
 .Z {
   background: red;
+}
+.Z.G {
+  background: white;
 }
