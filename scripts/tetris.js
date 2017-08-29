@@ -167,15 +167,26 @@ var GameboardUtils = {
     });
   },
   checkClearRows(blocks) {
+    var rows = [];
+
+    // For each block placed, check each row to see if it can be removed
     blocks.forEach(function(block) {
       var y = block.y;
-      
+
       if (this.board[y].every(function(cell) {
-        return cell != 0;
+        return cell != 0 && cell != 'G';
       }) ) {
-        this.board.splice(y, 1);
-        this.board.unshift([0,0,0,0,0,0,0,0,0,0]);
+        if(rows.indexOf(y) === -1) rows.push(y);
       }
+
+    }, this);
+
+    // Add score
+
+    // Remove rows and add new ones on top
+    rows.forEach(function(row) {
+      this.board.splice(row, 1);
+      this.board.unshift([0,0,0,0,0,0,0,0,0,0]);
     }, this);
   }
 }
@@ -243,7 +254,8 @@ var Tetromino = {
     if (this.lockDelay) {
       this.lockDelay--;
 
-      if (this.lockDelay < 1) {
+      if (this.lockDelay == 0) {
+
         var transformed = this.transform(1, 0, this.blocks);
         if (!this.checkCollision(transformed)) {
           Gameboard.tetromino = null;
@@ -316,15 +328,20 @@ var Tetromino = {
 
     if (input == 'ArrowDown') {
       if (this.lockDelay) {
-        this.lockDelay == 0;
+        this.lockDelay = 1;
       } else {
         this.move
       }
     }
 
     if (input == 'ArrowUp') {
-      var blocks = this.getBottom(1);
-      this.moveSelf(blocks);
+      if (this.lockDelay > 0) {
+        console.log('lock delay');
+        this.lockDelay = 1;
+      } else {
+        var blocks = this.getBottom(1);
+        this.moveSelf(blocks);
+      }
     }
 
     if (input == 'a') {
