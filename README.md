@@ -33,7 +33,7 @@
 * Correct start locations
 * ~~Ghost piece~~
 * ~~Lose state~~
-* [DAS](https://harddrop.com/wiki/DAS)
+* ~~[DAS](https://harddrop.com/wiki/DAS)~~
 * ~~[Lock delay](https://harddrop.com/wiki/Lock_delay)~~
   * ~~Specifically manual lock~~
 * Scoring system

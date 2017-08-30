@@ -8,11 +8,8 @@ var Game = {
     UserInputs.init();
     requestAnimationFrame(Game.main.bind(this));
   },
-  processInput() {
-    //console.log(UserInputs.inputqueue);
-    //UserInputs.inputqueue.pop();
-  },
   update(timeStep) {
+    UserInputs.processInput();
     Gameboard.tick(timeStep);
   },
   render(interp) {
@@ -26,7 +23,7 @@ var Game = {
     this.lastFrameMs = timestamp;
     this.delta += elapsed;
 
-    this.processInput();
+    //this.processInput();
     while (this.delta >= this.timeStep) {
       this.update(this.timeStep);
       this.delta -= this.timeStep;
@@ -39,12 +36,44 @@ var Game = {
 
 var UserInputs = {
   init() {
-    document.addEventListener('keyup', function(event) {
-     this.inputqueue.push(event.key);
-    }.bind(this));
+    document.addEventListener('keydown', this.keyDown.bind(this));
+    document.addEventListener('keyup', this.keyUp.bind(this));
   },
-  keyDown: false,
-  keyHold: false,
+  processInput() {
+    if (this.isDown) {
+      this.isDown.frames++;
+     
+     if (!this.isDown.held) {
+      if (this.isDown.frames == 15) {
+        this.isDown.frames = 0;
+        this.isDown.held = true;
+      }
+     } else {
+       if (this.isDown.frames == 5) {
+        this.inputqueue.push(this.isDown.key);
+        this.isDown.frames = 0;
+       }
+     }
+     
+    }
+    
+  },
+  keyDown(event) {
+    if (this.isDown == false) {
+      var key = {
+        key: event.keyCode,
+        held: false,
+        frames: 0
+      }
+      this.isDown = key;
+    }
+    console.log(event);
+    this.inputqueue.push(this.isDown.key);
+  },
+  keyUp(event) {
+    this.isDown = false;
+  },
+  isDown: false,
   inputqueue: []
 };
 
@@ -261,28 +290,28 @@ var Tetromino = {
   update() {
     this.handleInput();
 
-    if (this.spawnDelay) {
-      this.spawnDelay--;
-      return;
-    }
+    // if (this.spawnDelay) {
+    //   this.spawnDelay--;
+    //   return;
+    // }
 
-    if (this.lockDelay) {
-      this.lockDelay--;
+    // if (this.lockDelay) {
+    //   this.lockDelay--;
 
-      if (this.lockDelay == 0) {
+    //   if (this.lockDelay == 0) {
 
-        var transformed = this.transform(1, 0, this.blocks);
-        if (!this.checkCollision(transformed)) {
-          Gameboard.tetromino = null;
-          Gameboard.checkClearRows(this.blocks);
-          Gameboard.checkGameOver();
-        }
-      }
-      return;
-    }
+    //     var transformed = this.transform(1, 0, this.blocks);
+    //     if (!this.checkCollision(transformed)) {
+    //       Gameboard.tetromino = null;
+    //       Gameboard.checkClearRows(this.blocks);
+    //       Gameboard.checkGameOver();
+    //     }
+    //   }
+    //   return;
+    // }
 
-    this.frames++;
-    this.advance();
+    // this.frames++;
+    // this.advance();
   },
   advance() {
     if (this.frames != 15) return;
@@ -327,25 +356,25 @@ var Tetromino = {
   },
   handleInput() {
     var input = UserInputs.inputqueue.pop();
-    console.log(input)
+    
     if (input) {
       console.log(input);
     }
-    if (input == 'ArrowLeft') {
+    if (input == 65) {
       var transformed = this.transform(0, -1, this.blocks);
       if (this.checkCollision(transformed)) {
         this.moveSelf(transformed);
       }
     }
 
-    if (input == 'ArrowRight') {
+    if (input == 68) {
       var transformed = this.transform(0, 1, this.blocks);
       if (this.checkCollision(transformed)) {
         this.moveSelf(transformed);
       }
     }
 
-    if (input == 'ArrowDown') {
+    if (input == 83) {
       if (this.lockDelay) {
         this.lockDelay = 1;
       } else {
@@ -353,7 +382,7 @@ var Tetromino = {
       }
     }
 
-    if (input == 'ArrowUp') {
+    if (input == 87) {
       if (this.spawnDelay) {
         this.spawnDelay = 0;
       }
@@ -366,11 +395,11 @@ var Tetromino = {
       }
     }
 
-    if (input == 'a') {
+    if (input == 37) {
       this.SRS(1, -1);
     }
 
-    if (input == 's') {
+    if (input == 39) {
       this.SRS(-1, 1);
     }
   },
