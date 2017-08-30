@@ -40,9 +40,11 @@ var Game = {
 var UserInputs = {
   init() {
     document.addEventListener('keyup', function(event) {
-      this.inputqueue.push(event.key);
+     this.inputqueue.push(event.key);
     }.bind(this));
   },
+  keyDown: false,
+  keyHold: false,
   inputqueue: []
 };
 
@@ -112,7 +114,13 @@ var GameboardUtils = {
         writable: true,
         enumerable: true,
         configurable: true,
-        value: false
+        value: 0
+      },
+      spawnDelay: {
+        writable: true,
+        enumerable: true,
+        configurable: true,
+        value: 25
       }
     };
 
@@ -183,8 +191,10 @@ var GameboardUtils = {
 
     // Add score
 
-    // Remove rows and add new ones on top
-    rows.forEach(function(row) {
+    // Sort the array and remove rows from bottom to top
+    rows.sort(function(a, b) {
+      return a - b;
+    }).forEach(function(row) {
       this.board.splice(row, 1);
       this.board.unshift([0,0,0,0,0,0,0,0,0,0]);
     }, this);
@@ -251,6 +261,11 @@ var Tetromino = {
   update() {
     this.handleInput();
 
+    if (this.spawnDelay) {
+      this.spawnDelay--;
+      return;
+    }
+
     if (this.lockDelay) {
       this.lockDelay--;
 
@@ -312,6 +327,10 @@ var Tetromino = {
   },
   handleInput() {
     var input = UserInputs.inputqueue.pop();
+    console.log(input)
+    if (input) {
+      console.log(input);
+    }
     if (input == 'ArrowLeft') {
       var transformed = this.transform(0, -1, this.blocks);
       if (this.checkCollision(transformed)) {
@@ -335,8 +354,11 @@ var Tetromino = {
     }
 
     if (input == 'ArrowUp') {
-      if (this.lockDelay > 0) {
-        console.log('lock delay');
+      if (this.spawnDelay) {
+        this.spawnDelay = 0;
+      }
+
+      if (this.lockDelay) {
         this.lockDelay = 1;
       } else {
         var blocks = this.getBottom(1);

@@ -17,6 +17,10 @@
 * [Fix your time step](https://gafferongames.com/post/fix_your_timestep/)
 * [JavaScript game loop](http://isaacsukin.com/news/2015/01/detailed-explanation-javascript-game-loops-and-timing)
 
+### Key Press
+* http://nokarma.org/2011/02/27/javascript-game-development-keyboard-input/index.html
+* https://gablaxian.com/articles/creating-a-game-with-javascript/handling-user-input
+
 ---
 
 ## Todo
