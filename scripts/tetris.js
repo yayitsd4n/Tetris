@@ -9,7 +9,6 @@ var Game = {
     requestAnimationFrame(Game.main.bind(this));
   },
   update(timeStep) {
-    UserInputs.processInput();
     Gameboard.tick(timeStep);
   },
   render(interp) {
@@ -23,7 +22,7 @@ var Game = {
     this.lastFrameMs = timestamp;
     this.delta += elapsed;
 
-    //this.processInput();
+    UserInputs.processInput();
     while (this.delta >= this.timeStep) {
       this.update(this.timeStep);
       this.delta -= this.timeStep;
@@ -40,6 +39,12 @@ var UserInputs = {
     document.addEventListener('keyup', this.keyUp.bind(this));
   },
   processInput() {
+    
+    // Prevent auto-repeat for rotate and up key
+    if (this.isDown.key == 37 || this.isDown.key == 39 || this.keyDown.key == 38) {
+      return;
+    }
+
     if (this.isDown) {
       this.isDown.frames++;
      
@@ -66,15 +71,18 @@ var UserInputs = {
         frames: 0
       }
       this.isDown = key;
+      this.inputqueue.push(this.isDown.key);
     }
-    console.log(event);
-    this.inputqueue.push(this.isDown.key);
   },
   keyUp(event) {
     this.isDown = false;
   },
   isDown: false,
   inputqueue: []
+};
+
+var Points = {
+
 };
 
 // The game board state
@@ -272,7 +280,7 @@ var RandomGenerator = {
   },
   generateNewBag() {
     var tetrominoes = ['I','J','L','O','S','T','Z'];
-    //var tetrominoes = ['I','I','I','I','I','I','I'];
+    //var tetrominoes = ['L','L','L','L','L','L','L',];
     var bag = [];
 
     for (var i = 7; i > 0; i--) {
@@ -356,10 +364,7 @@ var Tetromino = {
   },
   handleInput() {
     var input = UserInputs.inputqueue.pop();
-    
-    if (input) {
-      console.log(input);
-    }
+ 
     if (input == 65) {
       var transformed = this.transform(0, -1, this.blocks);
       if (this.checkCollision(transformed)) {
@@ -382,7 +387,7 @@ var Tetromino = {
       }
     }
 
-    if (input == 87) {
+    if (input == 38) {
       if (this.spawnDelay) {
         this.spawnDelay = 0;
       }
@@ -444,6 +449,18 @@ var Tetromino = {
   },
   SRS(directionY, directionX) {
     var rotate = this.rotate(directionY, directionX, this.blocks);
+    
+    // Adjusts rotate position for I, L, J pieces if they're rotated on the floor
+    if (!rotate.every(function(piece) {
+      return piece.y < Gameboard.board.length;
+    })) {
+      rotate = rotate.map(function(piece){
+        return {
+          y: piece.y - 2,
+          x: piece.x
+        }
+      });
+    }
 
     if (this.checkCollision(rotate)) {
       this.moveSelf(rotate);
