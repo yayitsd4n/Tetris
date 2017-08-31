@@ -25,18 +25,28 @@
 
 ## Todo
 * ~~Hard-drop~~
-* Soft-drop
-* ~~Deleting rows~~
+* Scoring system
 * Game speed
   * Gravity curve
-* Showing next 3
+* Soft-drop
+* ~~Deleting rows~~
 * Correct start locations
 * ~~Ghost piece~~
 * ~~Lose state~~
 * ~~[DAS](https://harddrop.com/wiki/DAS)~~
 * ~~[Lock delay](https://harddrop.com/wiki/Lock_delay)~~
-  * ~~Specifically manual lock~~
-* Scoring system
+  * ~~Manual lock~~
+* Hold piece
+* Sound?
+  * Music
+  * Sound effects
+    * Rotate
+    * Set piece
+    * Lock delay
+    * Delete row
+    * Game over
+
+* Pause
 * UI
   * Board style
   * Piece style
@@ -44,5 +54,19 @@
   * Points
   * Level
   * Time played
-* Game over screen
-* Pause
+  * Background
+    * https://api.nasa.gov/api.html#authentication
+  * Start screen
+  * Game over screen
+* Effects
+  * Hard drop
+    * Speed trails. Change cell color and fade out.
+  * Soft drop
+    * Maybe the same thing as hard drop
+  * Delete row
+    * Transition to white
+    * Show points. Transition up and fade out.
+  * Lock delay
+    * Transition to white. Transition to piece color.
+  * Background
+    * Crossfade

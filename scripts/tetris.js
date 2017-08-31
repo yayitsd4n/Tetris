@@ -10,12 +10,10 @@ var Game = {
   },
   update(timeStep) {
     Gameboard.tick(timeStep);
+    Observer.processEvents();
   },
   render(interp) {
-    var canvas = document.getElementById('game');
-        ctx = canvas.getContext('2d');
-    
-    Asciirender.render();
+    Render.render();
   },
   main: function(timestamp) {
     var elapsed = timestamp - this.lastFrameMs;
@@ -41,7 +39,7 @@ var UserInputs = {
   processInput() {
     
     // Prevent auto-repeat for rotate and up key
-    if (this.isDown.key == 37 || this.isDown.key == 39 || this.keyDown.key == 38) {
+    if (this.isDown.key == 65 || this.isDown.key == 68 || this.keyDown.key == 38) {
       return;
     }
 
@@ -81,8 +79,25 @@ var UserInputs = {
   inputqueue: []
 };
 
-var Points = {
+var Observer = {
+  events: [],
+  processEvents() {
+    this.events.forEach(function(event) {
+      switch(event.name) {
+        case('addPoints'):
+          Points.add(event.data);
+        break;
+      }
+    }, this);
 
+    this.events = [];
+  }
+};
+
+var Points = {
+  add(data) {
+
+  }
 };
 
 // The game board state
@@ -116,13 +131,19 @@ var Gameboard = {
     [0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0]
   ],
-  tetromino: null,
+  entities: {
+    tetromino: null,
+    effects: []
+  },
   tick(timeStep) {
-    if (!this.tetromino) {
+    if (!this.entities.tetromino) {
       this.setTetromino();
-      this.tetromino.spawn();
     }
-    this.tetromino.update();
+
+    this.entities.tetromino.update();
+    this.entities.effects.forEach(function(effect) {
+      effect.update();
+    }, this);
   }
 };
 
@@ -176,31 +197,31 @@ var GameboardUtils = {
     switch (tetromino) {
       case 'I':
         setBlocks(I);
-        this.tetromino = Object.create(I, properties);
+        this.entities.tetromino = Object.create(I, properties);
         break;
       case 'J':
         setBlocks(J);
-        this.tetromino = Object.create(J, properties);
+        this.entities.tetromino = Object.create(J, properties);
         break;
       case 'L':
         setBlocks(L);
-        this.tetromino = Object.create(L, properties);
+        this.entities.tetromino = Object.create(L, properties);
         break;
       case 'O':
         setBlocks(O);
-        this.tetromino = Object.create(O, properties);
+        this.entities.tetromino = Object.create(O, properties);
         break;
       case 'S':
         setBlocks(S);
-        this.tetromino = Object.create(S, properties);
+        this.entities.tetromino = Object.create(S, properties);
         break;
       case 'T':
         setBlocks(T);
-        this.tetromino = Object.create(T, properties);
+        this.entities.tetromino = Object.create(T, properties);
         break;
       case 'Z':
         setBlocks(Z);
-        this.tetromino = Object.create(Z, properties);
+        this.entities.tetromino = Object.create(Z, properties);
         break;
     }
   },
@@ -239,9 +260,9 @@ var GameboardUtils = {
 }
 Object.setPrototypeOf(Gameboard, GameboardUtils);
 
-var Asciirender = {
+var Render = {
   render() {
-    var asciiCanavs = document.getElementById('asciiGame');
+    var asciiCanavs = document.getElementById('game');
     
     var frame = document.createElement('table');
     frame.innerHTML = '<tbody id="frameBody"></tbody>';
@@ -250,24 +271,24 @@ var Asciirender = {
     asciiCanavs.innerHTML = '';
 
     this.board.forEach(function(row, rowIndex) {
-      var asciiRow = document.createElement('tr');
+      var domRow = document.createElement('tr');
       if (rowIndex < 2) {
-        asciiRow.classList = 'hidden';
+        domRow.classList = 'hidden';
       }
       row.forEach(function(column) {
         var square = document.createElement('td');
 
         if (column != 0) square.classList = column;
 
-        asciiRow.appendChild(square);
+        domRow.appendChild(square);
       });
-      frameBody.appendChild(asciiRow);
+      frameBody.appendChild(domRow);
     }, this);
 
     asciiCanavs.appendChild(frame);
   }
 };
-Object.setPrototypeOf(Asciirender, Gameboard);
+Object.setPrototypeOf(Render, Gameboard);
 
 // Handles randomly generating and returning a tetromino
 var RandomGenerator = {
@@ -296,30 +317,34 @@ var RandomGenerator = {
 
 var Tetromino = {
   update() {
+    if (this.spawnDelay == 25) {
+      this.spawn();
+    }
+
     this.handleInput();
 
-    // if (this.spawnDelay) {
-    //   this.spawnDelay--;
-    //   return;
-    // }
+    if (this.spawnDelay) {
+      this.spawnDelay--;
+      return;
+    }
 
-    // if (this.lockDelay) {
-    //   this.lockDelay--;
+    if (this.lockDelay) {
+      this.lockDelay--;
 
-    //   if (this.lockDelay == 0) {
+      if (this.lockDelay == 0) {
 
-    //     var transformed = this.transform(1, 0, this.blocks);
-    //     if (!this.checkCollision(transformed)) {
-    //       Gameboard.tetromino = null;
-    //       Gameboard.checkClearRows(this.blocks);
-    //       Gameboard.checkGameOver();
-    //     }
-    //   }
-    //   return;
-    // }
+        var transformed = this.transform(1, 0, this.blocks);
+        if (!this.checkCollision(transformed)) {
+          Gameboard.entities.tetromino = null;
+          Gameboard.checkClearRows(this.blocks);
+          Gameboard.checkGameOver();
+        }
+      }
+      return;
+    }
 
-    // this.frames++;
-    // this.advance();
+    this.frames++;
+    this.advance();
   },
   advance() {
     if (this.frames != 15) return;
@@ -365,21 +390,21 @@ var Tetromino = {
   handleInput() {
     var input = UserInputs.inputqueue.pop();
  
-    if (input == 65) {
+    if (input == 37) {
       var transformed = this.transform(0, -1, this.blocks);
       if (this.checkCollision(transformed)) {
         this.moveSelf(transformed);
       }
     }
 
-    if (input == 68) {
+    if (input == 39) {
       var transformed = this.transform(0, 1, this.blocks);
       if (this.checkCollision(transformed)) {
         this.moveSelf(transformed);
       }
     }
 
-    if (input == 83) {
+    if (input == 49) {
       if (this.lockDelay) {
         this.lockDelay = 1;
       } else {
@@ -400,11 +425,11 @@ var Tetromino = {
       }
     }
 
-    if (input == 37) {
+    if (input == 65) {
       this.SRS(1, -1);
     }
 
-    if (input == 39) {
+    if (input == 68) {
       this.SRS(-1, 1);
     }
   },
