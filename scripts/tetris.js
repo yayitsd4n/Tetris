@@ -10,7 +10,6 @@ var Game = {
   },
   update(timeStep) {
     Gameboard.tick(timeStep);
-    Observer.processEvents();
   },
   render(interp) {
     Render.render();
@@ -47,7 +46,7 @@ var UserInputs = {
       this.isDown.frames++;
      
      if (!this.isDown.held) {
-      if (this.isDown.frames == 15) {
+      if (this.isDown.frames == 8) {
         this.isDown.frames = 0;
         this.isDown.held = true;
       }
@@ -56,10 +55,8 @@ var UserInputs = {
         this.inputqueue.push(this.isDown.key);
         this.isDown.frames = 0;
        }
-     }
-     
+     }   
     }
-    
   },
   keyDown(event) {
     if (this.isDown == false) {
@@ -79,31 +76,10 @@ var UserInputs = {
   inputqueue: []
 };
 
-var Observer = {
-  events: [],
-  processEvents() {
-    this.events.forEach(function(event) {
-      switch(event.name) {
-        case('addPoints'):
-          Points.add(event.data);
-        break;
-      }
-    }, this);
-
-    this.events = [];
-  }
-};
-
-var Points = {
-  add(data) {
-
-  }
-};
-
 // The game board state
 var Gameboard = {
   properties: {
-    speed: 1
+    level: 1,
   },
   board: [
     [0,0,0,0,0,0,0,0,0,0],
@@ -247,7 +223,10 @@ var GameboardUtils = {
 
     }, this);
 
+    if (rows.length == 0) return;
+
     // Add score
+    Points.add(['lineClear', rows.length]);
 
     // Sort the array and remove rows from bottom to top
     rows.sort(function(a, b) {
@@ -259,6 +238,57 @@ var GameboardUtils = {
   }
 }
 Object.setPrototypeOf(Gameboard, GameboardUtils);
+
+var Points = {
+  points: 0,
+  lines: 0,
+  add(data) {
+    var key = data[0],
+        value = data[1];
+
+    switch (key) {
+      case ('lineClear'):
+        this.lineClear(value);
+      break;
+    }
+
+    this.levelUp();
+    document.getElementById('level').innerHTML = this.properties.level;
+    document.getElementById('score').innerHTML = this.points;
+  },
+  lineClear(lines) {
+    var level = this.properties.level;
+
+    switch(lines) {
+      case(1):
+        this.points += 100 * level;
+        this.lines += 1;
+      break;
+      case(2):
+        this.points += 300 * level;
+        this.lines += 3;
+      break;
+      case(3):
+        this.points += 500 * level;
+        this.lines += 5;
+      break;
+      case(4):
+        this.points += 800 * level;
+        this.lines += 8;
+      break;
+    }
+  },
+  levelUp() {
+    var level = this.properties.level;
+
+    if (this.lines >= level * 5) {
+      this.properties.level++;
+      this.lines = this.lines - (level * 5);
+    }
+  }
+  
+};
+Object.setPrototypeOf(Points, Gameboard);
 
 var Render = {
   render() {
@@ -328,6 +358,7 @@ var Tetromino = {
       return;
     }
 
+    
     if (this.lockDelay) {
       this.lockDelay--;
 
@@ -347,7 +378,7 @@ var Tetromino = {
     this.advance();
   },
   advance() {
-    if (this.frames != 15) return;
+    if (this.frames < this.dropSpeed()) return;
     this.frames = 0;
 
     var transformed = this.transform(1, 0, this.blocks);
@@ -357,6 +388,38 @@ var Tetromino = {
       this.lockDelay = 30;
     }
   },
+  dropSpeed() {
+    if (this.softDrop) return 4;
+    switch (Gameboard.properties.level) {
+      case (1):
+        return 60;
+      case (2):
+        return 48;
+      case (3):
+        return 37;
+      case (4):
+        return 28;
+      case (5):
+        return 21;
+      case (6):
+        return 16;
+      case (7):
+        return 11;
+      case (8):
+        return 8;
+      case (9):
+        return 6;
+      case (10):
+        return 4;
+      case (11):
+        return 3;
+      case (12):
+        return 2;
+      default:
+        return 1;
+    }
+  },
+  softDrop: false,
   spawn() {
     this.blocks.forEach(function(block) {
       Gameboard.board[block.y][block.x] = this.block;
@@ -389,6 +452,8 @@ var Tetromino = {
   },
   handleInput() {
     var input = UserInputs.inputqueue.pop();
+
+    this.softDrop = false;
  
     if (input == 37) {
       var transformed = this.transform(0, -1, this.blocks);
@@ -404,25 +469,26 @@ var Tetromino = {
       }
     }
 
-    if (input == 49) {
-      if (this.lockDelay) {
-        this.lockDelay = 1;
-      } else {
-        this.move
-      }
-    }
-
     if (input == 38) {
       if (this.spawnDelay) {
         this.spawnDelay = 0;
       }
 
+      var blocks = this.getBottom(1);
+      this.moveSelf(blocks);
+      this.lockDelay = 30;
+    }
+
+    if (input == 40) {
+      if (this.spawnDelay) {
+        this.spawnDelay = 0;
+      } 
+
       if (this.lockDelay) {
         this.lockDelay = 1;
-      } else {
-        var blocks = this.getBottom(1);
-        this.moveSelf(blocks);
       }
+        
+      this.softDrop = true;
     }
 
     if (input == 65) {
